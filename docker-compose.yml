@@ -1,39 +1,182 @@
 # =========================================================
-#  docker-compose.yml — ESQUELETO (Etapa 1: Isolamento)
+#  docker-compose.yml — Fase 2 (A Fundação): ambiente completo
 #
-#  Objetivo desta etapa: apenas isolar o ambiente.
-#  Ainda NÃO há código de aplicação nem infraestrutura
-#  (fila / storage / banco de status). Esses serviços
-#  entram em etapas posteriores do pipeline.
+#  Sobe o BACKEND + INFRA da arquitetura descrita no CLAUDE.md:
+#    orchestrator (Java) + worker (Python) + RabbitMQ + Redis + MinIO
+#  e cria os buckets do MinIO automaticamente (serviço minio-init).
 #
-#  Os serviços abaixo apontam para Dockerfiles placeholder
-#  e compartilham uma rede isolada.
+#  O FRONTEND (Next.js) NÃO está aqui — é hospedado na Vercel.
+#
+#  Config por ambiente (regra de governança nº 6): cada variável usa
+#  ${VAR:-default}, então `docker compose up` funciona direto com os
+#  defaults de dev. Para sobrescrever, copie .env.example para .env
+#  (o Compose carrega .env automaticamente) e ajuste os valores.
+#
+#  ATENÇÃO: orchestrator e worker ainda são PLACEHOLDERS (sem app).
+#  A infra (rabbitmq/redis/minio) já é real e utilizável.
 # =========================================================
 
 services:
+  # ---------------- Backend (placeholders por enquanto) ----------------
   orchestrator:
-    # Java / Spring Boot — orquestração (API, fila, storage, status dos jobs)
     build:
       context: ./orchestrator
       dockerfile: Dockerfile
     container_name: sisr-orchestrator
+    environment:
+      SERVER_PORT: ${SERVER_PORT:-8080}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      MAX_UPLOAD_SIZE: ${MAX_UPLOAD_SIZE:-10MB}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+      RABBITMQ_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-guest}
+      RABBITMQ_QUEUE: ${RABBITMQ_QUEUE:-sisr.jobs.queue}
+      REDIS_HOST: redis
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_JOB_TTL: ${REDIS_JOB_TTL:-86400}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_BUCKET_INPUT: ${MINIO_BUCKET_INPUT:-sisr-inputs}
+      MINIO_BUCKET_OUTPUT: ${MINIO_BUCKET_OUTPUT:-sisr-outputs}
+      MINIO_SECURE: ${MINIO_SECURE:-false}
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
     networks:
       - sisr-net
-    # ports / environment / depends_on entram em etapas futuras
+    restart: unless-stopped
 
   worker:
-    # Python — executa o modelo do TCC (inferência)
     build:
       context: ./worker
       dockerfile: Dockerfile
     container_name: sisr-worker
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+      RABBITMQ_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-guest}
+      RABBITMQ_QUEUE: ${RABBITMQ_QUEUE:-sisr.jobs.queue}
+      REDIS_HOST: redis
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_JOB_TTL: ${REDIS_JOB_TTL:-86400}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_BUCKET_INPUT: ${MINIO_BUCKET_INPUT:-sisr-inputs}
+      MINIO_BUCKET_OUTPUT: ${MINIO_BUCKET_OUTPUT:-sisr-outputs}
+      MINIO_SECURE: ${MINIO_SECURE:-false}
+      MODEL_PATH: ${MODEL_PATH:-/app/models/model.pth}
+      MODEL_SCALE: ${MODEL_SCALE:-4}
+      DEVICE: ${DEVICE:-cpu}
+      WORKER_PREFETCH: ${WORKER_PREFETCH:-1}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ./worker/models:/app/models
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
     networks:
       - sisr-net
-    # ports / environment / depends_on entram em etapas futuras
+    restart: unless-stopped
+
+  # ---------------- Infraestrutura (imagens prontas) ----------------
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: sisr-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"   # AMQP (serviços)
+      - "15672:15672"                   # console web de gestão
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - sisr-net
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: sisr-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sisr-net
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio
+    container_name: sisr-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    ports:
+      - "9000:9000"   # API S3 (serviços)
+      - "9001:9001"   # console web
+    volumes:
+      - minio-data:/data
+    networks:
+      - sisr-net
+    restart: unless-stopped
+
+  # Job de bootstrap: espera o MinIO e cria os buckets, depois encerra.
+  minio-init:
+    image: minio/mc
+    container_name: sisr-minio-init
+    depends_on:
+      - minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+      BUCKET_INPUT: ${MINIO_BUCKET_INPUT:-sisr-inputs}
+      BUCKET_OUTPUT: ${MINIO_BUCKET_OUTPUT:-sisr-outputs}
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD;
+      do echo 'aguardando MinIO...'; sleep 2; done;
+      mc mb --ignore-existing local/$$BUCKET_INPUT;
+      mc mb --ignore-existing local/$$BUCKET_OUTPUT;
+      echo 'Buckets prontos: '$$BUCKET_INPUT', '$$BUCKET_OUTPUT;
+      "
+    networks:
+      - sisr-net
+    restart: "no"
 
 networks:
   sisr-net:
     driver: bridge
     name: sisr-net
 
-# volumes: definidos quando entrar a infraestrutura (storage/banco)
+volumes:
+  rabbitmq-data:
+  redis-data:
+  minio-data:

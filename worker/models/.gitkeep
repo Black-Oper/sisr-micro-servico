@@ -1,0 +1,4 @@
+# Pasta dos pesos do modelo do TCC (ex.: model.pth).
+# Mantida no git via .gitkeep mesmo vazia.
+# Os pesos em si NÃO são versionados aqui — ver .gitignore (considerar Git LFS).
+# Em runtime, é montada no worker como /app/models (ver docker-compose.yml).
