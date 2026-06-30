@@ -1,0 +1,40 @@
+# =========================================================
+#  .dockerignore — reduz o contexto de build enviado ao daemon
+#  Etapa 1: Isolamento e Governança
+# =========================================================
+
+# Controle de versão / metadados
+.git
+.gitignore
+.dockerignore
+
+# Documentação
+*.md
+docs/
+
+# Java
+**/target/
+**/build/
+**/.gradle/
+
+# Python
+**/__pycache__/
+**/*.py[cod]
+**/.venv/
+**/venv/
+**/.pytest_cache/
+**/.mypy_cache/
+
+# Segredos / ambiente
+**/.env
+!**/.env.example
+
+# IDE / SO
+**/.idea/
+**/.vscode/
+**/.DS_Store
+**/Thumbs.db
+
+# Logs
+**/*.log
+**/logs/

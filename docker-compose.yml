@@ -1,0 +1,39 @@
+# =========================================================
+#  docker-compose.yml — ESQUELETO (Etapa 1: Isolamento)
+#
+#  Objetivo desta etapa: apenas isolar o ambiente.
+#  Ainda NÃO há código de aplicação nem infraestrutura
+#  (fila / storage / banco de status). Esses serviços
+#  entram em etapas posteriores do pipeline.
+#
+#  Os serviços abaixo apontam para Dockerfiles placeholder
+#  e compartilham uma rede isolada.
+# =========================================================
+
+services:
+  orchestrator:
+    # Java / Spring Boot — orquestração (API, fila, storage, status dos jobs)
+    build:
+      context: ./orchestrator
+      dockerfile: Dockerfile
+    container_name: sisr-orchestrator
+    networks:
+      - sisr-net
+    # ports / environment / depends_on entram em etapas futuras
+
+  worker:
+    # Python — executa o modelo do TCC (inferência)
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    container_name: sisr-worker
+    networks:
+      - sisr-net
+    # ports / environment / depends_on entram em etapas futuras
+
+networks:
+  sisr-net:
+    driver: bridge
+    name: sisr-net
+
+# volumes: definidos quando entrar a infraestrutura (storage/banco)

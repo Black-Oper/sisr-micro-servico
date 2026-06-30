@@ -1,0 +1,59 @@
+# =========================================================
+#  .gitignore — monorepo poliglota (Java/Spring + Python)
+#  Etapa 1: Isolamento e Governança
+# =========================================================
+
+# ----- Segredos / ambiente -----
+.env
+*.env
+!.env.example
+
+# ----- Java / Maven / Gradle -----
+target/
+build/
+.gradle/
+*.class
+*.jar
+*.war
+!**/.mvn/wrapper/maven-wrapper.jar
+!**/gradle/wrapper/gradle-wrapper.jar
+hs_err_pid*
+
+# ----- Python -----
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# ----- Artefatos de modelo / ML (TCC) -----
+# Pesos costumam ser grandes -> considerar Git LFS depois.
+# Descomente conforme o formato do seu modelo:
+# *.pkl
+# *.h5
+# *.pt
+# *.pth
+# *.onnx
+# /worker/models/
+
+# ----- IDE / Editores -----
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# ----- SO -----
+.DS_Store
+Thumbs.db
+
+# ----- Logs / temporários -----
+*.log
+logs/
+tmp/
