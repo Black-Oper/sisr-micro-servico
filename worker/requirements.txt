@@ -1,0 +1,7 @@
+# Dependencias de runtime do worker.
+# torch/torchvision sao instalados no Dockerfile a partir do indice CPU do
+# PyTorch (para nao baixar as libs CUDA). Versoes: torch 2.8.0, torchvision 0.23.0.
+pika
+redis
+minio
+Pillow

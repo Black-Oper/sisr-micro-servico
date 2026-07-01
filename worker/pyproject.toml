@@ -1,0 +1,9 @@
+[project]
+name = "sisr-worker"
+version = "0.0.1"
+description = "Worker de super-resolucao (consome a fila, roda o modelo)"
+requires-python = ">=3.9"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

@@ -1,21 +1,23 @@
+# syntax=docker/dockerfile:1
 # =========================================================
-#  orchestrator/Dockerfile — PLACEHOLDER (Etapa 1)
+#  orchestrator/Dockerfile — build multi-stage (Java 21 / Spring Boot)
 #
-#  Serviço Java/Spring Boot responsável pela orquestração.
-#  Ainda NÃO há código-fonte: este Dockerfile só fixa a
-#  imagem-base para isolar o ambiente. As etapas de build
-#  (COPY do projeto, mvn/gradle package, runtime enxuto)
-#  entram quando o código Spring Boot existir.
+#  Estágio 1 (build): compila com Maven e empacota o .jar (pula testes —
+#    testes usam Testcontainers e rodam no `mvn test`, não no build da imagem).
+#  Estágio 2 (runtime): imagem JRE enxuta só com o .jar.
 # =========================================================
 
-# --- Imagem base de runtime (JDK 21 LTS) ---
-FROM eclipse-temurin:21-jdk-jammy
-
+# --- build ---
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -B -ntp clean package -Dmaven.test.skip=true
 
-# Placeholder enquanto não há aplicação.
-# Em etapas futuras (multi-stage build sugerido):
-#   1) estágio "build"  -> compila com Maven/Gradle
-#   2) estágio "runtime"-> copia apenas o .jar
-#   ENTRYPOINT ["java","-jar","app.jar"]
-CMD ["bash", "-c", "echo 'orchestrator placeholder — sem app ainda (Etapa 1)'; sleep infinity"]
+# --- runtime ---
+FROM eclipse-temurin:21-jre-jammy
+WORKDIR /app
+COPY --from=build /app/target/orchestrator-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]

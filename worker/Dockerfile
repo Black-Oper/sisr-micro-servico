@@ -1,22 +1,27 @@
 # =========================================================
-#  worker/Dockerfile — PLACEHOLDER (Etapa 1)
+#  worker/Dockerfile — servico Python (consome a fila, roda o modelo RTDVSR)
 #
-#  Serviço Python responsável por rodar o modelo do TCC.
-#  Ainda NÃO há código-fonte: este Dockerfile só fixa a
-#  imagem-base para isolar o ambiente. As etapas de build
-#  (COPY do código, pip install -r requirements.txt,
-#  download/cópia dos pesos do modelo) entram depois.
+#  PyTorch e instalado do indice CPU dedicado (sem libs CUDA). Os pesos do
+#  modelo NAO vao na imagem: sao montados via volume (./worker/models) em runtime.
 # =========================================================
-
-# --- Imagem base (Python 3.9 slim) ---
 FROM python:3.9-slim
 
 WORKDIR /app
 
-# Placeholder enquanto não há aplicação.
-# Em etapas futuras:
-#   COPY requirements.txt .
-#   RUN pip install --no-cache-dir -r requirements.txt
-#   COPY . .
-#   CMD ["python", "worker.py"]
-CMD ["bash", "-c", "echo 'worker placeholder — sem app ainda (Etapa 1)'; sleep infinity"]
+# pip atualizado: o pip da imagem slim tem um bug de normalizacao de nome que
+# rejeita wheels do indice do PyTorch (typing-extensions vs typing_extensions).
+RUN pip install --no-cache-dir --upgrade pip
+
+# PyTorch (CPU) — indice dedicado para evitar o download das libs CUDA
+RUN pip install --no-cache-dir \
+        --index-url https://download.pytorch.org/whl/cpu \
+        torch==2.8.0 torchvision==0.23.0
+
+# Demais dependencias (PyPI)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY src ./src
+ENV PYTHONPATH=/app/src
+
+CMD ["python", "-m", "worker"]

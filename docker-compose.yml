@@ -75,8 +75,8 @@ services:
       MINIO_BUCKET_INPUT: ${MINIO_BUCKET_INPUT:-sisr-inputs}
       MINIO_BUCKET_OUTPUT: ${MINIO_BUCKET_OUTPUT:-sisr-outputs}
       MINIO_SECURE: ${MINIO_SECURE:-false}
-      MODEL_PATH: ${MODEL_PATH:-/app/models/model.pth}
-      MODEL_SCALE: ${MODEL_SCALE:-4}
+      MODEL_PATH: ${MODEL_PATH:-/app/models/RTDVSR_best_model.pth}
+      MODEL_SCALE: ${MODEL_SCALE:-2}
       DEVICE: ${DEVICE:-cpu}
       WORKER_PREFETCH: ${WORKER_PREFETCH:-1}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
