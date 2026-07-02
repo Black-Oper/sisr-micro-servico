@@ -1,0 +1,150 @@
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  color: #e5e5e5;
+  font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  background: linear-gradient(135deg, #0a0a0a 0%, #2b0000 100%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* cartao central (escuro) */
+.card {
+  max-width: 760px;
+  margin: 3rem auto;
+  padding: 2.5rem;
+  background: #161616;
+  border: 1px solid #2a2a2a;
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+}
+
+.card h1 {
+  font-size: 1.8rem;
+  color: #ef4444;
+}
+
+.card .subtitle {
+  color: #a3a3a3;
+  margin: 0.4rem 0 1.5rem;
+}
+
+/* botoes (e links com cara de botao) */
+.btn {
+  display: inline-block;
+  padding: 0.65rem 1.6rem;
+  border: none;
+  border-radius: 9999px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: center;
+  color: #fff;
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.35);
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(239, 68, 68, 0.5);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* formulario de upload */
+.upload {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.upload input[type="file"] {
+  font-size: 0.95rem;
+  color: #d4d4d4;
+}
+
+.upload input[type="file"]::file-selector-button {
+  margin-right: 0.6rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #3a1010;
+  border-radius: 9999px;
+  font-weight: 600;
+  color: #ef4444;
+  background: #1f0d0d;
+  cursor: pointer;
+}
+
+/* comparador antes/depois */
+.slider {
+  margin-top: 1rem;
+}
+
+.slider-frame {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #2a2a2a;
+  user-select: none;
+}
+
+.slider-img {
+  display: block;
+  width: 100%;
+}
+
+.slider-after-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.slider-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  margin-left: -1.5px;
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
+  pointer-events: none;
+}
+
+.slider input[type="range"] {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  margin: 0.85rem auto 0;
+  accent-color: #ef4444;
+  cursor: pointer;
+}
+
+.status {
+  font-weight: 600;
+  color: #ef4444;
+}
+
+.job-id {
+  color: #737373;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.error {
+  color: #ef4444;
+  font-weight: 600;
+}

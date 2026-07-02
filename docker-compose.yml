@@ -159,13 +159,16 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
       BUCKET_INPUT: ${MINIO_BUCKET_INPUT:-sisr-inputs}
       BUCKET_OUTPUT: ${MINIO_BUCKET_OUTPUT:-sisr-outputs}
+      RETENTION_DAYS: ${RETENTION_DAYS:-1}
     entrypoint: >
       /bin/sh -c "
       until mc alias set local http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD;
       do echo 'aguardando MinIO...'; sleep 2; done;
       mc mb --ignore-existing local/$$BUCKET_INPUT;
       mc mb --ignore-existing local/$$BUCKET_OUTPUT;
-      echo 'Buckets prontos: '$$BUCKET_INPUT', '$$BUCKET_OUTPUT;
+      mc ilm rule add --expire-days $$RETENTION_DAYS local/$$BUCKET_INPUT || echo 'ilm input: pulado';
+      mc ilm rule add --expire-days $$RETENTION_DAYS local/$$BUCKET_OUTPUT || echo 'ilm output: pulado';
+      echo 'Buckets + retencao ('$$RETENTION_DAYS' dia(s)) prontos.';
       "
     networks:
       - sisr-net

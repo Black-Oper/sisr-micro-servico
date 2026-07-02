@@ -1,10 +1,12 @@
 package com.sisr.orchestrator.repository;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -17,9 +19,13 @@ public class RedisJobRepository implements JobRepository {
     private static final String KEY_PREFIX = "job:";
 
     private final StringRedisTemplate redis;
+    private final long ttlSeconds;
 
-    public RedisJobRepository(StringRedisTemplate redis) {
+    public RedisJobRepository(
+            StringRedisTemplate redis,
+            @Value("${redis.job-ttl:86400}") long ttlSeconds) {
         this.redis = redis;
+        this.ttlSeconds = ttlSeconds;
     }
 
     @Override
@@ -34,7 +40,9 @@ public class RedisJobRepository implements JobRepository {
         putIfPresent(hash, "finishedAt", job.finishedAt());
         putIfPresent(hash, "error", job.error());
 
-        redis.opsForHash().putAll(KEY_PREFIX + job.id(), hash);
+        String key = KEY_PREFIX + job.id();
+        redis.opsForHash().putAll(key, hash);
+        redis.expire(key, Duration.ofSeconds(ttlSeconds));
     }
 
     @Override

@@ -23,3 +23,6 @@ class ArtifactStorage:
             bucket, key, io.BytesIO(data),
             length=len(data), content_type=content_type,
         )
+
+    def delete(self, bucket: str, key: str) -> None:
+        self._client.remove_object(bucket, key)

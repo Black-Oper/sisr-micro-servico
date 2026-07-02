@@ -9,6 +9,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.redis.DataRedisTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -41,6 +42,9 @@ class RedisJobRepositoryIntegrationTest {
     @Autowired
     JobRepository repository;
 
+    @Autowired
+    StringRedisTemplate redisTemplate;
+
     @Test
     void salvaERecuperaUmJob() {
         var agora = Instant.parse("2026-06-30T12:00:00Z");
@@ -59,5 +63,14 @@ class RedisJobRepositoryIntegrationTest {
     @Test
     void retornaVazioQuandoNaoExiste() {
         assertThat(repository.findById("nao-existe")).isEmpty();
+    }
+
+    @Test
+    void salvaComTtl() {
+        repository.save(Job.pending("job-ttl", 2, "job-ttl/input.png",
+                Instant.parse("2026-06-30T12:00:00Z")));
+
+        Long ttl = redisTemplate.getExpire("job:job-ttl");
+        assertThat(ttl).isPositive();
     }
 }

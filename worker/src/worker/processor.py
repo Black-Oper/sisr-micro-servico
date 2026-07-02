@@ -22,3 +22,10 @@ class JobProcessor:
             # marca FAILED e propaga -> o consumer da nack (mensagem vai p/ DLQ)
             self._state.mark_failed(message.job_id, str(e))
             raise
+
+        # O input nao e mais necessario: apaga para nao encher o storage.
+        # Best-effort: uma falha na limpeza NAO deve reverter o job concluido.
+        try:
+            self._storage.delete(message.input_bucket, message.input_key)
+        except Exception:
+            pass

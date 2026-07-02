@@ -38,3 +38,25 @@ def test_process_falha_marca_failed_e_propaga():
     state.mark_failed.assert_called_once()
     assert "boom" in state.mark_failed.call_args.args[1]
     state.mark_done.assert_not_called()
+
+
+def test_process_apaga_input_ao_concluir():
+    state, storage, model = Mock(), Mock(), Mock()
+    storage.download.return_value = b"input"
+    model.upscale.return_value = b"output"
+    proc = JobProcessor(state, storage, model, output_bucket="sisr-outputs")
+
+    proc.process(_msg())
+
+    storage.delete.assert_called_once_with("sisr-inputs", "job-1/input.png")
+
+
+def test_process_nao_apaga_input_em_falha():
+    state, storage, model = Mock(), Mock(), Mock()
+    storage.download.side_effect = RuntimeError("boom")
+    proc = JobProcessor(state, storage, model, output_bucket="sisr-outputs")
+
+    with pytest.raises(RuntimeError):
+        proc.process(_msg())
+
+    storage.delete.assert_not_called()

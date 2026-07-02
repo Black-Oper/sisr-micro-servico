@@ -30,3 +30,13 @@ def test_sobe_e_baixa_um_objeto(storage):
     baixado = storage.download("sisr-inputs", "job-1/input.png")
 
     assert baixado == conteudo
+
+
+def test_delete_remove_o_objeto(storage):
+    storage.ensure_bucket("sisr-inputs")
+    storage.upload("sisr-inputs", "job-del/input.png", b"conteudo", "image/png")
+
+    storage.delete("sisr-inputs", "job-del/input.png")
+
+    with pytest.raises(Exception):
+        storage.download("sisr-inputs", "job-del/input.png")
