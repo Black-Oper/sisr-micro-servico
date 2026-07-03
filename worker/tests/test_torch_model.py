@@ -4,7 +4,10 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from worker.torch_model import TorchModel
+# Sem PyTorch instalado (ex.: no CI) este módulo inteiro é pulado.
+pytest.importorskip("torch")
+
+from worker.torch_model import TorchModel  # noqa: E402
 
 WEIGHTS = Path(__file__).resolve().parent.parent / "models" / "RTDVSR_best_model.pth"
 

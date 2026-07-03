@@ -26,6 +26,7 @@ describe("cliente da API", () => {
     const [url, opts] = fetchMock.mock.calls[0];
     expect(String(url)).toContain("/jobs");
     expect(opts.method).toBe("POST");
+    expect(opts.headers["X-API-Key"]).toBeTruthy();
     expect(opts.body).toBeInstanceOf(FormData);
     expect((opts.body as FormData).get("scale")).toBe("2");
     expect((opts.body as FormData).get("file")).toBeInstanceOf(File);
@@ -41,8 +42,9 @@ describe("cliente da API", () => {
     const res = await getJob("job-1");
 
     expect(res.status).toBe("DONE");
-    const [url] = fetchMock.mock.calls[0];
+    const [url, opts] = fetchMock.mock.calls[0];
     expect(String(url)).toContain("/jobs/job-1");
+    expect(opts.headers["X-API-Key"]).toBeTruthy();
   });
 
   it("resultUrl monta a URL do resultado", () => {

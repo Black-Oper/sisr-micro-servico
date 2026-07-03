@@ -57,6 +57,7 @@ class JobE2EIntegrationTest {
         registry.add("minio.endpoint", () -> minio.getHost() + ":" + minio.getMappedPort(9000));
         registry.add("minio.access-key", minio::getUserName);
         registry.add("minio.secret-key", minio::getPassword);
+        registry.add("security.api-key", () -> "e2e-key");
     }
 
     @Autowired
@@ -76,7 +77,8 @@ class JobE2EIntegrationTest {
         var file = new MockMultipartFile("file", "in.png", "image/png", "fake-image".getBytes());
 
         MvcResult result = mockMvc.perform(
-                        multipart("/api/v1/jobs").file(file).param("scale", "4"))
+                        multipart("/api/v1/jobs").file(file).param("scale", "4")
+                                .header("X-API-Key", "e2e-key"))
                 .andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.status").value("PENDING"))
                 .andExpect(jsonPath("$.jobId").isNotEmpty())

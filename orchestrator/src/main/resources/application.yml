@@ -31,5 +31,8 @@ minio:
 redis:
   job-ttl: ${REDIS_JOB_TTL:86400}
 
+security:
+  api-key: ${API_KEY:dev-local-key}
+
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}

@@ -22,6 +22,8 @@ export interface JobDetails {
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080/api/v1";
 
+export const API_KEY = process.env.NEXT_PUBLIC_API_KEY ?? "dev-local-key";
+
 export async function createJob(
   file: File,
   scale = 2,
@@ -30,7 +32,11 @@ export async function createJob(
   form.append("file", file);
   form.append("scale", String(scale));
 
-  const res = await fetch(`${API_BASE}/jobs`, { method: "POST", body: form });
+  const res = await fetch(`${API_BASE}/jobs`, {
+    method: "POST",
+    body: form,
+    headers: { "X-API-Key": API_KEY },
+  });
   if (!res.ok) {
     throw new Error(`falha ao criar o job (HTTP ${res.status})`);
   }
@@ -38,7 +44,9 @@ export async function createJob(
 }
 
 export async function getJob(id: string): Promise<JobDetails> {
-  const res = await fetch(`${API_BASE}/jobs/${id}`);
+  const res = await fetch(`${API_BASE}/jobs/${id}`, {
+    headers: { "X-API-Key": API_KEY },
+  });
   if (!res.ok) {
     throw new Error(`falha ao consultar o job (HTTP ${res.status})`);
   }
