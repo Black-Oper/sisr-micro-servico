@@ -1,0 +1,7 @@
+# Caddyfile — reverse proxy com TLS automático (Let's Encrypt) na frente
+# do orchestrator. O domínio vem de PUBLIC_DOMAIN (.env), para não
+# hardcodar host por ambiente (regra de governança nº 6 do CLAUDE.md).
+
+{$PUBLIC_DOMAIN} {
+	reverse_proxy orchestrator:8080
+}

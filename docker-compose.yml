@@ -44,7 +44,7 @@ services:
       MINIO_BUCKET_OUTPUT: ${MINIO_BUCKET_OUTPUT:-sisr-outputs}
       MINIO_SECURE: ${MINIO_SECURE:-false}
     ports:
-      - "${SERVER_PORT:-8080}:8080"
+      - "127.0.0.1:${SERVER_PORT:-8080}:8080"
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -175,6 +175,26 @@ services:
       - sisr-net
     restart: "no"
 
+  # Reverse proxy com TLS automático (Let's Encrypt) — único ponto exposto
+  # publicamente nas portas 80/443. O orchestrator só escuta em localhost.
+  caddy:
+    image: caddy:2-alpine
+    container_name: sisr-caddy
+    environment:
+      PUBLIC_DOMAIN: ${PUBLIC_DOMAIN:?defina PUBLIC_DOMAIN no .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - orchestrator
+    networks:
+      - sisr-net
+    restart: unless-stopped
+
 networks:
   sisr-net:
     driver: bridge
@@ -184,3 +204,5 @@ volumes:
   rabbitmq-data:
   redis-data:
   minio-data:
+  caddy-data:
+  caddy-config:

@@ -1,7 +1,9 @@
 package com.sisr.orchestrator.security;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.sisr.orchestrator.service.JobNotFoundException;
@@ -56,5 +58,18 @@ class ApiKeyAuthFilterTest {
 
         mockMvc.perform(get("/api/v1/jobs/abc/result"))
                 .andExpect(status().isNotFound()); // 404, e NÃO 401 -> passou o filtro
+    }
+
+    @Test
+    void preflightOptionsNaoExigeChave() throws Exception {
+        // O navegador manda OPTIONS (preflight CORS) sem X-API-Key antes do
+        // POST/GET real. O filtro não pode bloquear isso com 401, senão o
+        // navegador nunca chega a ver os cabeçalhos de CORS da resposta real.
+        var result = mockMvc.perform(options("/api/v1/jobs/abc")
+                        .header("Origin", "https://sisr-micro-servico.vercel.app")
+                        .header("Access-Control-Request-Method", "GET"))
+                .andReturn();
+
+        assertThat(result.getResponse().getStatus()).isNotEqualTo(401);
     }
 }

@@ -29,7 +29,8 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
         String path = request.getRequestURI();
-        if (path.startsWith("/actuator/") || PUBLIC_RESULT.matcher(path).matches()) {
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())
+                || path.startsWith("/actuator/") || PUBLIC_RESULT.matcher(path).matches()) {
             chain.doFilter(request, response);
             return;
         }
